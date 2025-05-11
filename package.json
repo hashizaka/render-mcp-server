@@ -1,0 +1,27 @@
+{
+  "name": "render-mcp-server",
+  "version": "1.0.0",
+  "description": "Remote MCP Server on Render.com",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node test/test-server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "cors": "^2.8.5",
+    "uuid": "^9.0.1",
+    "dotenv": "^16.4.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "mcp",
+    "claude",
+    "remote-server"
+  ],
+  "author": "",
+  "license": "MIT"
+}
