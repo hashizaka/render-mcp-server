@@ -1,4 +1,4 @@
-# Remote MCP Server
+# Remote MCP Server with Render.com Integration
 
 Render.com API と連携するリモートMCPサーバー
 
@@ -11,6 +11,12 @@ Render.com API と連携するリモートMCPサーバー
 - サービスのデプロイ、再起動、停止、再開
 - 環境変数の管理
 - デプロイステータスのモニタリング
+
+## 特徴
+- Node.js/Express による軽量実装
+- Server-Sent Events (SSE) 対応
+- JSON-RPC 2.0 準拠
+- Render.com API連携
 
 ## 環境構築
 
@@ -41,7 +47,7 @@ cp .env.example .env
 npm run dev
 ```
 
-### 本番環境用ビルド
+### 本番環境用実行
 
 ```bash
 npm start
@@ -116,6 +122,18 @@ RESTful API経由でもサーバーを操作可能：
 5. 環境変数の設定（RENDER_API_TOKEN）
 6. デプロイを実行
 7. デプロイ後、サービスIDを取得して.envファイルを更新
+
+## Custom Integrations設定
+
+### 接続URL
+```
+https://your-render-url.onrender.com/mcp-sse
+```
+
+### 必要な設定
+- Protocol: SSE
+- Method: POST
+- Content-Type: application/json
 
 ## ライセンス
 
