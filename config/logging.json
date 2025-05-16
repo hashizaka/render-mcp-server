@@ -1,0 +1,8 @@
+{
+  "level": "info",
+  "format": "json",
+  "logDir": "/Users/hashizaka/mcp-local/mcp-server/logs",
+  "maxSize": "10m",
+  "maxFiles": "7d",
+  "compress": true
+}

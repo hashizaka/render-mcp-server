@@ -1,0 +1,40 @@
+{
+  "email": {
+    "enabled": true,
+    "smtpHost": "smtp.example.com",
+    "smtpPort": 587,
+    "secure": true,
+    "auth": {
+      "user": "notifications@example.com",
+      "pass": "password"
+    },
+    "from": "mcp-server@example.com"
+  },
+  "slack": {
+    "enabled": true,
+    "webhookUrl": "https://hooks.slack.com/services/XXXXX/YYYYY/ZZZZZ",
+    "channel": "#mcp-alerts"
+  },
+  "events": {
+    "syncCompleted": {
+      "email": true,
+      "slack": true
+    },
+    "syncFailed": {
+      "email": true,
+      "slack": true
+    },
+    "authFailure": {
+      "email": true,
+      "slack": true
+    },
+    "serverStart": {
+      "email": false,
+      "slack": true
+    },
+    "serverStop": {
+      "email": false,
+      "slack": true
+    }
+  }
+}

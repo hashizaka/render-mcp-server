@@ -1,0 +1,29 @@
+# 環境変数
+.env
+.env.*
+!.env.example
+
+# 依存関係
+node_modules
+package-lock.json
+yarn.lock
+
+# ログ
+logs
+*.log
+npm-debug.log*
+
+# ランタイムデータ
+*.pid
+*.seed
+*.pid.lock
+
+# IDE・エディタ設定
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS関連
+.DS_Store
+Thumbs.db
