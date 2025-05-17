@@ -1,0 +1,80 @@
+name: Deploy to Render
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+jobs:
+  deploy-to-render:
+    name: Deploy to Render
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Deploy to Render
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
+        run: |
+          echo "Deploying to Render..."
+          curl -X POST \
+            "https://api.render.com/v1/services/$SERVICE_ID/deploys" \
+            -H "Authorization: Bearer $RENDER_API_KEY" \
+            -H "Content-Type: application/json"
+          
+          echo "Deployment triggered successfully"
+      
+      - name: Wait for deployment
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
+        run: |
+          echo "Waiting for deployment to complete..."
+          
+          status="starting"
+          count=0
+          max_attempts=30
+          
+          while [ "$status" != "live" ] && [ $count -lt $max_attempts ]; do
+            sleep 10
+            count=$((count + 1))
+            
+            response=$(curl -s \
+              "https://api.render.com/v1/services/$SERVICE_ID" \
+              -H "Authorization: Bearer $RENDER_API_KEY")
+            
+            status=$(echo $response | jq -r '.status')
+            echo "Current status: $status (attempt $count/$max_attempts)"
+          done
+          
+          if [ "$status" = "live" ]; then
+            echo "Deployment completed successfully!"
+            exit 0
+          else
+            echo "Deployment timed out or failed"
+            exit 1
+          fi

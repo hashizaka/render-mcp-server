@@ -17,6 +17,7 @@ Render.com API と連携するリモートMCPサーバー
 - Server-Sent Events (SSE) 対応
 - JSON-RPC 2.0 準拠
 - Render.com API連携
+- GitHub Actions自動デプロイ対応
 
 ## 環境構築
 
@@ -30,7 +31,7 @@ Render.com API と連携するリモートMCPサーバー
 
 ```bash
 # リポジトリのクローン
-git clone <repository-url>
+git clone https://github.com/hashizaka/render-mcp-server.git
 cd mcp-server
 
 # 依存関係のインストール
@@ -52,6 +53,40 @@ npm run dev
 ```bash
 npm start
 ```
+
+## Render.comへのデプロイ方法
+
+### 1. 自動デプロイ (GitHub Actions)
+
+GitHub Actionsを使用した自動デプロイが設定されています：
+
+1. GitHubリポジトリにコードをプッシュするだけで自動的にデプロイされます
+2. mainブランチへのプッシュまたはタグ付け時に自動的にデプロイされます
+3. GitHub Actions画面から手動でデプロイを実行することも可能です
+
+**前提条件**：
+- GitHubリポジトリのSecretsに`RENDER_API_KEY`と`RENDER_SERVICE_ID`が設定されていること
+
+### 2. API直接呼び出しデプロイ
+
+Render APIを直接呼び出すスクリプトを使用：
+
+```bash
+./direct_api_deploy.command
+```
+
+### 3. 手動デプロイ
+
+Renderダッシュボードを使用した手動デプロイ：
+
+1. Renderダッシュボードにログイン
+2. 「New Web Service」を選択
+3. GitHubリポジトリを連携
+4. 設定:
+   - ビルドコマンド: `npm install`
+   - スタートコマンド: `npm start`
+5. 環境変数の設定（`RENDER_API_TOKEN`など）
+6. デプロイを実行
 
 ## 使用方法
 
@@ -110,30 +145,34 @@ RESTful API経由でもサーバーを操作可能：
 - Helmet.jsによるセキュリティヘッダーの設定
 - 認証ミドルウェアによるアクセス制御
 
-## Render.comへのデプロイ手順
-
-1. GitHubにリポジトリをプッシュ
-2. Renderダッシュボードで「New Web Service」を選択
-3. GitHubリポジトリを接続
-4. ビルド設定：
-   - 環境：`Node`
-   - ビルドコマンド：`npm install`
-   - スタートコマンド：`npm start`
-5. 環境変数の設定（RENDER_API_TOKEN）
-6. デプロイを実行
-7. デプロイ後、サービスIDを取得して.envファイルを更新
-
 ## Custom Integrations設定
 
 ### 接続URL
 ```
-https://your-render-url.onrender.com/mcp-sse
+https://render-mcp-server.onrender.com/mcp-sse
 ```
 
 ### 必要な設定
 - Protocol: SSE
 - Method: POST
 - Content-Type: application/json
+
+## CI/CD
+
+このプロジェクトはGitHub Actionsによる継続的デプロイを実装しています：
+
+- `.github/workflows/deploy-to-render.yml`ファイルで設定
+- mainブランチへのプッシュ時に自動デプロイ
+- リリースタグ(v*.*.*)作成時に自動デプロイ
+- 手動トリガーによるデプロイも可能
+
+## デプロイ方法一覧
+
+| デプロイ方法 | コマンド | メリット | 用途 |
+|------------|---------|---------|------|
+| GitHub Actions | 自動 | 完全自動化、コード連携 | 通常の開発サイクル |
+| 直接API呼び出し | `./direct_api_deploy.command` | CLIの問題を回避 | 緊急時、トラブル時 |
+| 手動デプロイ | Renderダッシュボード | 詳細な設定可能 | 初期セットアップ |
 
 ## ライセンス
 
