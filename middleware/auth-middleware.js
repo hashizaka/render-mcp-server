@@ -38,12 +38,12 @@ export function authenticateMCPSSE(req, res, next) {
   const clientId = process.env.OAUTH_CLIENT_ID || 'default-client';
   const redirectUri = `${protocol}://${host}/auth/callback`;
   
-  // 認証URLを設定
-  const authUrl = `/auth/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}`;
+  // 認証URLを設定（絶対URL形式）
+  const authUrl = `${protocol}://${host}/auth/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}`;
   req.authUrl = authUrl;
   
-  // ヘッダーに認証URLを追加
-  res.setHeader('X-MCP-Auth-URL', `${protocol}://${host}${authUrl}`);
+  // ヘッダーに認証URLを追加（すでに絶対URL形式なのでそのまま設定）
+  res.setHeader('X-MCP-Auth-URL', authUrl);
 
   // トークンなしの場合はWebブラウザからの直接アクセスと判断
   if (!token) {
