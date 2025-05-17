@@ -1,0 +1,27 @@
+# Render.com環境変数設定
+# このファイルの内容をRender.comダッシュボードの環境変数として設定してください
+
+NODE_ENV=production
+PORT=5678
+LOG_LEVEL=info
+
+# セキュリティ設定
+CORS_ORIGIN=https://claude.ai,https://*.claude.ai,https://api.anthropic.com,https://claude.anthropic.com
+JWT_SECRET=secured_jwt_secret_placeholder_for_production
+
+# OAuth設定
+OAUTH_CLIENT_ID=mcp_prod_client_id
+OAUTH_CLIENT_SECRET=secured_client_secret_placeholder_for_production
+OAUTH_REDIRECT_URI=https://claude.ai/oauth/callback
+ACCESS_TOKEN_EXPIRY=3600
+REFRESH_TOKEN_EXPIRY=2592000
+
+# Web版Claude連携設定
+ENABLE_WEB_CLAUDE_COMPAT=true
+ALLOWED_REDIRECT_URIS=https://claude.ai/oauth/callback,https://api.anthropic.com/oauth/callback,https://claude.anthropic.com/oauth/callback
+
+# MCP設定
+MCP_ENDPOINT_PATH=/sse
+
+# データストレージ設定
+STORAGE_TYPE=memory
