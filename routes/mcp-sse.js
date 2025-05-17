@@ -33,12 +33,26 @@ router.get('/', (req, res) => {
   
   // 接続確立メッセージ
   res.write(`id: ${clientId}\n`);
-  res.write(`data: ${JSON.stringify({
-    type: 'connection',
-    message: 'MCP SSE接続確立',
-    clientId,
-    timestamp: new Date().toISOString()
-  })}\n\n`);
+
+  // 認証状態に応じたメッセージ
+  if (req.isAuthenticated) {
+    res.write(`data: ${JSON.stringify({
+      type: 'connection',
+      message: 'MCP SSE接続確立',
+      clientId,
+      authenticated: true,
+      timestamp: new Date().toISOString()
+    })}\n\n`);
+  } else {
+    res.write(`data: ${JSON.stringify({
+      type: 'auth_required',
+      message: '認証が必要です',
+      clientId,
+      authenticated: false,
+      authUrl: req.authUrl,
+      timestamp: new Date().toISOString()
+    })}\n\n`);
+  }
   
   // 30秒ごとのキープアライブ
   const keepAliveInterval = setInterval(() => {

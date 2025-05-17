@@ -14,6 +14,7 @@
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
     "node-fetch": "^3.3.2",
     "uuid": "^9.0.1",
@@ -30,7 +31,8 @@
     "mcp",
     "claude",
     "remote-server",
-    "render-api"
+    "render-api",
+    "oauth"
   ],
   "license": "MIT"
 }

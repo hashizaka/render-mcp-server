@@ -1,10 +1,12 @@
 import express from 'express';
-import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import renderRoutes from './routes/render-api.js';
 import mcpSSERoutes from './routes/mcp-sse.js';
+import authRoutes from './routes/auth/auth-routes.js';
+import { defaultCors, sseCors } from './middleware/cors-middleware.js';
+import { authenticateMCPSSE } from './middleware/auth-middleware.js';
 
 // 環境変数の読み込み
 dotenv.config();
@@ -15,7 +17,7 @@ const PORT = process.env.PORT || 3000;
 
 // ミドルウェアの設定
 app.use(helmet()); // セキュリティヘッダーの設定
-app.use(cors()); // CORS対応
+app.use(defaultCors); // デフォルトCORS設定
 app.use(express.json()); // JSON解析
 app.use(morgan('combined')); // リクエストログ
 
@@ -37,8 +39,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-// エイリアスエンドポイント - テスト用
-// /status エンドポイント（/healthのエイリアス）
+// エイリアスエンドポイント - ステータス
 app.get('/status', (req, res) => {
   res.status(200).json({
     status: 'UP',
@@ -48,16 +49,7 @@ app.get('/status', (req, res) => {
   });
 });
 
-// /auth/status エンドポイント
-app.get('/auth/status', (req, res) => {
-  res.status(200).json({
-    auth: 'enabled',
-    status: 'operational',
-    timestamp: new Date().toISOString()
-  });
-});
-
-// /api/endpoints エンドポイント
+// API一覧エンドポイント
 app.get('/api/endpoints', (req, res) => {
   res.status(200).json({
     endpoints: [
@@ -65,8 +57,13 @@ app.get('/api/endpoints', (req, res) => {
       { path: '/health', method: 'GET', description: 'Health check' },
       { path: '/status', method: 'GET', description: 'Status check (alias for /health)' },
       { path: '/auth/status', method: 'GET', description: 'Authentication status' },
+      { path: '/auth/authorize', method: 'GET', description: 'OAuth 2.1 authorization endpoint' },
+      { path: '/auth/token', method: 'POST', description: 'OAuth 2.1 token endpoint' },
+      { path: '/auth/refresh', method: 'POST', description: 'OAuth 2.1 token refresh endpoint' },
+      { path: '/auth/revoke', method: 'POST', description: 'OAuth 2.1 token revocation endpoint' },
       { path: '/api/endpoints', method: 'GET', description: 'API endpoints list' },
       { path: '/mcp-sse', method: 'GET', description: 'MCP SSE router' },
+      { path: '/sse', method: 'GET', description: 'MCP SSE endpoint (alias for /mcp-sse)' },
       { path: '/api/render', method: 'GET', description: 'Render API related' },
       { path: '/events', method: 'GET', description: 'Events endpoint (alias for /mcp-sse/events)' },
       { path: '/error/test', method: 'GET', description: 'Error test endpoint' }
@@ -75,8 +72,18 @@ app.get('/api/endpoints', (req, res) => {
   });
 });
 
-// /events エンドポイント（MCP SSE用エイリアス）
-app.get('/events', (req, res) => {
+// ルーティング
+app.use('/auth', authRoutes);
+app.use('/oauth', authRoutes); // Web版Claude互換性のためのエイリアス
+app.use('/auth/oauth', authRoutes); // 二重パス対応
+app.use('/api/render', renderRoutes);
+
+// SSE関連ルーティング（CORSとOptional認証）
+app.use('/mcp-sse', sseCors, authenticateMCPSSE, mcpSSERoutes);
+app.use('/sse', sseCors, authenticateMCPSSE, mcpSSERoutes); // エイリアス
+
+// イベントエンドポイント（SSEのエイリアス）
+app.get('/events', sseCors, authenticateMCPSSE, (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
@@ -95,11 +102,12 @@ app.get('/events', (req, res) => {
   res.write(`data: ${JSON.stringify({
     event: 'connected',
     message: 'SSE connection established',
+    authenticated: req.isAuthenticated,
     timestamp: new Date().toISOString()
   })}\n\n`);
 });
 
-// /error/test エンドポイント
+// エラーテストエンドポイント
 app.get('/error/test', (req, res, next) => {
   try {
     // エラーテスト用に意図的にエラーを発生
@@ -116,12 +124,6 @@ app.get('/error/test', (req, res, next) => {
     next(err);
   }
 });
-
-// MCP SSEルーターの使用
-app.use('/mcp-sse', mcpSSERoutes);
-
-// API ルート
-app.use('/api/render', renderRoutes);
 
 // 存在しないルートのハンドリング
 app.use((req, res) => {
@@ -146,6 +148,7 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`OAuth enabled with protocol version: 2025-03-26`);
 });
 
 export default app;
