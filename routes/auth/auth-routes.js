@@ -12,6 +12,7 @@ router.get('/', (req, res) => {
 
 // OAuth認証フローエンドポイント
 router.get('/authorize', oauthController.authorize);
+router.get('/callback', oauthController.callback);
 router.post('/token', oauthController.token);
 router.post('/refresh', tokenController.refresh);
 router.post('/revoke', tokenController.revoke);

@@ -10,6 +10,66 @@ const authorizationCodes = new Map();
 const activeTokens = new Map();
 
 const oauthController = {
+  // 認証コールバック処理
+  callback: (req, res) => {
+    try {
+      const { code, state } = req.query;
+      
+      if (!code) {
+        return res.status(400).json({
+          error: 'invalid_request',
+          error_description: 'Authorization code is required'
+        });
+      }
+      
+      // 認証コードの存在確認
+      if (!authorizationCodes.has(code)) {
+        return res.status(400).json({
+          error: 'invalid_grant',
+          error_description: 'Invalid or expired authorization code'
+        });
+      }
+      
+      const codeData = authorizationCodes.get(code);
+      
+      // 成功ページ表示
+      res.send(`
+        <!DOCTYPE html>
+        <html lang="ja">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>認証成功</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 0; padding: 20px; text-align: center; }
+            .container { max-width: 600px; margin: 0 auto; }
+            .success { color: #00aa00; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <h1 class="success">認証成功</h1>
+            <p>MCPサーバーへの接続が承認されました。</p>
+            <p>このページは閉じて構いません。</p>
+            <script>
+              // 5秒後に閉じる試行
+              setTimeout(() => {
+                window.close();
+              }, 5000);
+            </script>
+          </div>
+        </body>
+        </html>
+      `);
+    } catch (error) {
+      console.error('認証コールバックエラー:', error);
+      res.status(500).json({
+        error: 'server_error',
+        error_description: 'Internal server error during callback processing'
+      });
+    }
+  },
+
   // 認証リクエスト処理
   authorize: (req, res) => {
     const {
