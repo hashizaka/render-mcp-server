@@ -29,7 +29,13 @@ export const oauthConfig = {
   tokenSigningKey: process.env.JWT_SECRET || 'default_secret_for_development_only',
   
   // Web版Claude連携設定
-  enableWebClaudeCompat: process.env.ENABLE_WEB_CLAUDE_COMPAT === 'true'
+  enableWebClaudeCompat: process.env.ENABLE_WEB_CLAUDE_COMPAT === 'true',
+  
+  // Google認証連携設定
+  acceptGoogleAuth: process.env.ACCEPT_GOOGLE_AUTH === 'true',
+  googleClientIds: process.env.GOOGLE_CLIENT_IDS ? 
+    process.env.GOOGLE_CLIENT_IDS.split(',') : 
+    ['*.googleusercontent.com']
 };
 
 export default oauthConfig;

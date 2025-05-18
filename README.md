@@ -144,6 +144,22 @@ RESTful API経由でもサーバーを操作可能：
 - APIキーは環境変数として安全に管理
 - Helmet.jsによるセキュリティヘッダーの設定
 - 認証ミドルウェアによるアクセス制御
+- Google認証連携機能サポート（Web版Claude対応）
+
+## Google認証連携
+
+Web版Claudeとの接続時に複合認証問題（Google認証と独自認証の競合）を解決するための機能を提供しています：
+
+### 必要な環境変数
+```
+# Google認証連携設定
+ACCEPT_GOOGLE_AUTH=true
+GOOGLE_CLIENT_IDS=*.googleusercontent.com
+```
+
+### 認証エンドポイント
+- `POST /auth/google/token`: Googleトークン検証・変換
+- `POST /auth/google/refresh`: Googleトークンリフレッシュ処理
 
 ## Custom Integrations設定
 
