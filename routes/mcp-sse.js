@@ -20,7 +20,7 @@ function sendEventToClients(event) {
   }
 }
 
-// MCP SSEエンドポイント
+// MCP SSEエンドポイント（修正版）
 router.get('/', (req, res) => {
   // SSEヘッダー設定
   res.setHeader('Content-Type', 'text/event-stream');
@@ -34,24 +34,66 @@ router.get('/', (req, res) => {
   // 接続確立メッセージ
   res.write(`id: ${clientId}\n`);
 
-  // 認証状態に応じたメッセージ
+  // 認証状態に応じたメッセージ（修正点：詳細情報追加）
   if (req.isAuthenticated) {
+    // 認証成功メッセージ（拡張）
     res.write(`data: ${JSON.stringify({
       type: 'connection',
       message: 'MCP SSE接続確立',
       clientId,
       authenticated: true,
+      authMethod: 'token',
+      user: {
+        clientId: req.user.client_id,
+        type: req.user.type,
+        provider: req.user.auth_provider || 'oauth'
+      },
       timestamp: new Date().toISOString()
     })}\n\n`);
+    
+    // 認証成功後、1秒後に追加確認メッセージを送信（修正点：追加）
+    setTimeout(() => {
+      if (clients.has(clientId)) {
+        res.write(`data: ${JSON.stringify({
+          type: 'auth_success_confirmed',
+          message: '認証が確認されました',
+          clientId,
+          timestamp: new Date().toISOString()
+        })}\n\n`);
+      }
+    }, 1000);
   } else {
+    // 認証要求メッセージ（拡張：エラー情報追加）
     res.write(`data: ${JSON.stringify({
       type: 'auth_required',
       message: '認証が必要です',
       clientId,
       authenticated: false,
       authUrl: req.authUrl,
+      error: req.authError, // エラー情報があれば含める
       timestamp: new Date().toISOString()
     })}\n\n`);
+    
+    // 認証状態確認用の定期メッセージ（新規追加）
+    const authCheckInterval = setInterval(() => {
+      if (clients.has(clientId)) {
+        // 認証状態チェック用メッセージ
+        res.write(`data: ${JSON.stringify({
+          type: 'auth_check',
+          message: '認証状態を確認してください',
+          clientId,
+          authUrl: req.authUrl,
+          timestamp: new Date().toISOString()
+        })}\n\n`);
+      } else {
+        clearInterval(authCheckInterval);
+      }
+    }, 10000); // 10秒ごとに認証状態確認
+    
+    // クリーンアップ処理追加
+    req.on('close', () => {
+      clearInterval(authCheckInterval);
+    });
   }
   
   // 30秒ごとのキープアライブ

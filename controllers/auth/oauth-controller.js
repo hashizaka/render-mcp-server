@@ -31,8 +31,28 @@ const oauthController = {
       }
       
       const codeData = authorizationCodes.get(code);
+      authorizationCodes.delete(code); // 使用済みコードの削除
       
-      // 成功ページ表示
+      // アクセストークン生成（修正点：コールバック時にトークン発行）
+      const accessToken = jwt.sign(
+        { client_id: codeData.client_id || 'default-client', type: 'access' },
+        process.env.JWT_SECRET || 'default_secret_for_development_only',
+        { expiresIn: parseInt(process.env.ACCESS_TOKEN_EXPIRY) || 3600 }
+      );
+      
+      // リフレッシュトークン生成
+      const refreshToken = crypto.randomBytes(32).toString('hex');
+      const refreshExpiresAt = Date.now() + (parseInt(process.env.REFRESH_TOKEN_EXPIRY) || 2592000) * 1000;
+      
+      // トークン保存
+      activeTokens.set(refreshToken, {
+        client_id: codeData.client_id || 'default-client',
+        refreshExpiresAt
+      });
+      
+      console.log(`認証完了: クライアントID ${codeData.client_id || 'default-client'} にトークン発行`);
+      
+      // 成功ページ表示（修正点：親ウィンドウ通信機能追加）
       res.send(`
         <!DOCTYPE html>
         <html lang="ja">
@@ -50,12 +70,37 @@ const oauthController = {
           <div class="container">
             <h1 class="success">認証成功</h1>
             <p>MCPサーバーへの接続が承認されました。</p>
-            <p>このページは閉じて構いません。</p>
+            <p>このページは自動的に閉じられます。</p>
             <script>
-              // 5秒後に閉じる試行
+              // 認証成功メッセージを親ウィンドウに送信
+              try {
+                if (window.opener) {
+                  window.opener.postMessage({
+                    type: 'mcp_auth_success',
+                    token: '${accessToken}',
+                    timestamp: new Date().toISOString()
+                  }, '*');
+                  console.log('認証メッセージを親ウィンドウに送信しました');
+                }
+              } catch (e) {
+                console.error('親ウィンドウとの通信エラー:', e);
+              }
+              
+              // トークンをローカルストレージに保存
+              try {
+                if (window.localStorage) {
+                  window.localStorage.setItem('mcp_auth_token', '${accessToken}');
+                  window.localStorage.setItem('mcp_auth_timestamp', new Date().toISOString());
+                  console.log('認証情報をローカルストレージに保存しました');
+                }
+              } catch (e) {
+                console.error('ローカルストレージ保存エラー:', e);
+              }
+              
+              // 3秒後に閉じる試行
               setTimeout(() => {
                 window.close();
-              }, 5000);
+              }, 3000);
             </script>
           </div>
         </body>
@@ -65,7 +110,8 @@ const oauthController = {
       console.error('認証コールバックエラー:', error);
       res.status(500).json({
         error: 'server_error',
-        error_description: 'Internal server error during callback processing'
+        error_description: 'Internal server error during callback processing',
+        details: process.env.NODE_ENV === 'production' ? undefined : error.message
       });
     }
   },

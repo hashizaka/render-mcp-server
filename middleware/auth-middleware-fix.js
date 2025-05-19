@@ -1,3 +1,6 @@
+// SSE認証ミドルウェア修正案
+// ファイル: /mcp-server/middleware/auth-middleware.js
+
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 

@@ -2,6 +2,12 @@ import express from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// __dirnameの設定（ESモジュール対応）
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 import renderRoutes from './routes/render-api.js';
 import mcpSSERoutes from './routes/mcp-sse.js';
 import authRoutes from './routes/auth/auth-routes.js';
@@ -20,6 +26,9 @@ app.use(helmet()); // セキュリティヘッダーの設定
 app.use(defaultCors); // デフォルトCORS設定
 app.use(express.json()); // JSON解析
 app.use(morgan('combined')); // リクエストログ
+
+// 静的ファイルの提供
+app.use(express.static(path.join(__dirname, 'public')));
 
 // 基本ルート
 app.get('/', (req, res) => {
